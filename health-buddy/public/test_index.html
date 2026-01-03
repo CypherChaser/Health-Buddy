@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HealthBuddy - AI Assistant</title>
+    <style>
+        :root {
+            --primary: #4CAF50;
+            --primary-dark: #388E3C;
+            --background: #f5f7fa;
+            --card-bg: #ffffff;
+            --text: #333333;
+            --text-secondary: #666666;
+            --border: #e0e0e0;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: var(--background);
+            color: var(--text);
+            line-height: 1.6;
+            padding: 20px;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        h1 {
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+        
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 2rem;
+        }
+        
+        .card {
+            background: var(--card-bg);
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .card h2 {
+            color: var(--primary);
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
+        }
+        
+        .input-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        textarea {
+            width: 100%;
+            min-height: 100px;
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            resize: vertical;
+            font-size: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        button {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background-color 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        button:hover {
+            background-color: var(--primary-dark);
+        }
+        
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        
+        #micButton {
+            font-size: 1.5rem;
+            padding: 10px 15px;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .status {
+            margin: 1rem 0;
+            padding: 10px;
+            border-radius: 6px;
+            background-color: #f0f0f0;
+            min-height: 20px;
+        }
+        
+        .response {
+            margin-top: 1rem;
+            padding: 1rem;
+            background-color: #f8f9fa;
+            border-left: 4px solid var(--primary);
+            border-radius: 0 4px 4px 0;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .mic-active {
+            background-color: #f44336 !important;
+            animation: pulse 1.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 1rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .audio-controls {
+            margin-top: 1rem;
+            width: 100%;
+        }
+
+        /* Image Upload Styles */
+        .upload-container {
+            margin: 1rem 0;
+        }
+
+        .upload-label {
+            display: inline-block;
+            padding: 8px 16px;
+            background-color: var(--primary);
+            color: white;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .upload-label:hover {
+            background-color: var(--primary-dark);
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .image-preview {
+            margin-top: 1rem;
+            text-align: center;
+        }
+
+        .preview-image {
+            max-width: 100%;
+            max-height: 200px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            margin-top: 10px;
+            display: none;
+        }
+
+        .remove-image {
+            margin-top: 5px;
+            background-color: #f44336;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            display: none;
+        }
+
+        .remove-image:hover {
+            background-color: #d32f2f;
+        }
+
+        /* Camera Feed Styles */
+        .camera-container {
+            margin: 1rem 0;
+            text-align: center;
+            display: block;  /* Changed from none to block */
+        }
+
+        #cameraFeed {
+            width: 100%;
+            max-width: 500px;
+            border-radius: 8px;
+            margin: 10px 0;
+            display: none;
+        }
+
+        #capturedImage {
+            max-width: 100%;
+            max-height: 200px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            margin-top: 10px;
+            display: none;
+        }
+
+        .camera-buttons {
+            margin: 10px 0;
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .camera-buttons button {
+            margin: 0;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>HealthBuddy AI Assistant</h1>
+        <p>Your personal health and nutrition assistant</p>
+    </header>
+    
+    <div class="container">
+        <div class="card">
+            <h2>Ask HealthBuddy</h2>
+            <div class="input-group">
+                <textarea id="userInput" placeholder="Type your health or nutrition question here..."></textarea>
+                
+                <div class="upload-container">
+                    <label for="fileInput" class="upload-label">
+                        📷 Upload Food Label or Image
+                    </label>
+                    <input type="file" id="fileInput" accept="image/*">
+                    <div class="image-preview">
+                        <img id="previewImage" class="preview-image" alt="Preview">
+                        <button id="removeImage" class="remove-image">Remove Image</button>
+                    </div>
+                    
+                    <!-- Camera Feed Section -->
+                    <div class="camera-container">
+                        <video id="cameraFeed" autoplay playsinline></video>
+                        <div class="camera-buttons">
+                            <button id="startCamera" class="upload-label">📷 Start Camera</button>
+                            <button id="captureBtn" class="upload-label" style="display: none;">📸 Capture</button>
+                            <button id="stopCamera" class="upload-label" style="background-color: #f44336; display: none;">❌ Stop Camera</button>
+                        </div>
+                        <canvas id="canvas" style="display:none;"></canvas>
+                        <img id="capturedImage" alt="Captured">
+                    </div>
+                </div>
+                
+                <div class="controls">
+                    <button id="micButton" title="Start/Stop Recording">🎤</button>
+                    <button id="sendButton">Send Message</button>
+                </div>
+                <div id="status" class="status">Ready</div>
+                <div id="transcript" class="status"></div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h2>AI Response</h2>
+            <div id="response" class="response">
+                <p>Your response will appear here. You can ask about nutrition, food ingredients, or upload an image of a food label for analysis.</p>
+            </div>
+            <div class="audio-controls">
+                <audio id="audioPlayer" controls class="hidden"></audio>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // DOM Elements
+        const micButton = document.getElementById('micButton');
+        const sendButton = document.getElementById('sendButton');
+        const userInput = document.getElementById('userInput');
+        const statusDiv = document.getElementById('status');
+        const transcriptDiv = document.getElementById('transcript');
+        const responseDiv = document.getElementById('response');
+        const audioPlayer = document.getElementById('audioPlayer');
+        const fileInput = document.getElementById('fileInput');
+        const previewImage = document.getElementById('previewImage');
+        const removeImageBtn = document.getElementById('removeImage');
+        const startCameraBtn = document.getElementById('startCamera');
+        const stopCameraBtn = document.getElementById('stopCamera');
+        const captureBtn = document.getElementById('captureBtn');
+        const cameraFeed = document.getElementById('cameraFeed');
+        const canvas = document.getElementById('canvas');
+        const capturedImage = document.getElementById('capturedImage');
+        const cameraContainer = document.querySelector('.camera-container');
+        
+        let recognition;
+        let isRecording = false;
+        let currentImage = null;
+        let stream = null;
+        
+        // Check for browser support
+        if ('webkitSpeechRecognition' in window) {
+            recognition = new webkitSpeechRecognition();
+            recognition.continuous = false;
+            recognition.interimResults = true;
+            
+            recognition.onstart = () => {
+                isRecording = true;
+                micButton.classList.add('mic-active');
+                statusDiv.textContent = 'Listening...';
+                transcriptDiv.textContent = '';
+            };
+            
+            recognition.onresult = (event) => {
+                const transcript = Array.from(event.results)
+                    .map(result => result[0])
+                    .map(result => result.transcript)
+                    .join('');
+                
+                transcriptDiv.textContent = transcript;
+                userInput.value = transcript;
+                
+                if (event.results[0].isFinal) {
+                    // Auto-send when user stops speaking
+                    sendMessage(transcript);
+                }
+            };
+            
+            recognition.onerror = (event) => {
+                console.error('Speech recognition error', event.error);
+                statusDiv.textContent = `Error: ${event.error}`;
+                isRecording = false;
+                micButton.classList.remove('mic-active');
+            };
+            
+            recognition.onend = () => {
+                if (isRecording) {
+                    // If still supposed to be recording, restart
+                    recognition.start();
+                } else {
+                    micButton.classList.remove('mic-active');
+                }
+            };
+        } else {
+            micButton.disabled = true;
+            statusDiv.textContent = 'Speech recognition not supported in this browser';
+        }
+        
+        // Event Listeners
+        micButton.addEventListener('click', toggleRecording);
+        sendButton.addEventListener('click', () => sendMessage(userInput.value));
+        
+        // Allow pressing Enter to send message (Shift+Enter for new line)
+        userInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage(userInput.value);
+            }
+        });
+
+        // Handle image upload and camera
+        fileInput.addEventListener('change', handleImageUpload);
+        removeImageBtn.addEventListener('click', removeImage);
+        startCameraBtn.addEventListener('click', startCamera);
+        stopCameraBtn.addEventListener('click', stopCamera);
+        captureBtn.addEventListener('click', captureImage);
+
+        function toggleRecording() {
+            if (!recognition) return;
+            
+            if (isRecording) {
+                recognition.stop();
+                isRecording = false;
+                statusDiv.textContent = 'Processing...';
+            } else {
+                try {
+                    recognition.start();
+                } catch (e) {
+                    console.error('Error starting recognition:', e);
+                    statusDiv.textContent = 'Error starting microphone';
+                }
+            }
+        }
+
+        function handleImageUpload(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    previewImage.src = e.target.result;
+                    previewImage.style.display = 'block';
+                    removeImageBtn.style.display = 'inline-block';
+                    currentImage = file;
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        // Camera functions
+        async function startCamera() {
+            // Reset any previous error states
+            statusDiv.textContent = 'Accessing camera...';
+            
+            try {
+                // Stop any existing stream first
+                if (stream) {
+                    stopCamera();
+                }
+                
+                stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { 
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 },
+                        facingMode: 'environment' // Use the back camera by default
+                    } 
+                });
+                
+                cameraFeed.srcObject = stream;
+                cameraFeed.style.display = 'block';
+                cameraContainer.style.display = 'block';
+                startCameraBtn.style.display = 'none';
+                captureBtn.style.display = 'inline-block';
+                stopCameraBtn.style.display = 'inline-block';
+                capturedImage.style.display = 'none';
+                
+                // Hide file upload when camera is active
+                fileInput.disabled = true;
+                document.querySelector('.upload-label').style.opacity = '0.6';
+                statusDiv.textContent = 'Camera ready. Click capture to take a photo.';
+                
+            } catch (err) {
+                console.error('Error accessing camera:', err);
+                let errorMessage = 'Could not access the camera. ';
+                
+                if (err.name === 'NotAllowedError') {
+                    errorMessage += 'Please allow camera access in your browser settings.';
+                } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+                    errorMessage += 'No camera found on this device.';
+                } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
+                    errorMessage += 'Camera is already in use by another application.';
+                } else {
+                    errorMessage += 'Please try again or use the file upload instead.';
+                }
+                
+                statusDiv.textContent = errorMessage;
+                stopCamera();
+            }
+        }
+        
+        function stopCamera() {
+            // Stop all tracks in the stream
+            if (stream) {
+                const tracks = stream.getTracks();
+                tracks.forEach(track => {
+                    track.stop();
+                    track.enabled = false;
+                });
+                
+                // Remove the stream from the video element
+                if (cameraFeed.srcObject) {
+                    cameraFeed.srcObject = null;
+                }
+                
+                stream = null;
+            }
+            
+            // Reset UI
+            cameraFeed.style.display = 'none';
+            captureBtn.style.display = 'none';
+            stopCameraBtn.style.display = 'none';
+            startCameraBtn.style.display = 'inline-block';
+            
+            // Don't hide captured image here - let the user see what they captured
+            
+            // Re-enable file upload
+            fileInput.disabled = false;
+            document.querySelector('.upload-label').style.opacity = '1';
+        }
+        
+        function captureImage() {
+            if (!stream) return;
+            
+            try {
+                // Set canvas size to match video
+                canvas.width = cameraFeed.videoWidth;
+                canvas.height = cameraFeed.videoHeight;
+                
+                // Draw the current video frame to canvas
+                const context = canvas.getContext('2d');
+                context.drawImage(cameraFeed, 0, 0, canvas.width, canvas.height);
+                
+                // Convert canvas to blob and create a file
+                canvas.toBlob((blob) => {
+                    if (!blob) {
+                        throw new Error('Failed to capture image');
+                    }
+                    
+                    // Revoke any previous object URL to prevent memory leaks
+                    if (capturedImage.src && capturedImage.src.startsWith('blob:')) {
+                        URL.revokeObjectURL(capturedImage.src);
+                    }
+                    
+                    const file = new File([blob], 'capture.jpg', { 
+                        type: 'image/jpeg',
+                        lastModified: Date.now()
+                    });
+                    
+                    // Display the captured image
+                    const url = URL.createObjectURL(blob);
+                    capturedImage.src = url;
+                    capturedImage.style.display = 'block';
+                    capturedImage.alt = 'Captured image';
+                    
+                    // Set as current image for sending
+                    currentImage = file;
+                    
+                    // Show the captured image and hide the live feed
+                    cameraFeed.style.display = 'none';
+                    captureBtn.style.display = 'none';
+                    
+                    // Show remove button if it's hidden
+                    removeImageBtn.style.display = 'inline-block';
+                    
+                    statusDiv.textContent = 'Image captured! Click send to analyze or take another photo.';
+                    
+                }, 'image/jpeg', 0.9);
+                
+            } catch (err) {
+                console.error('Error capturing image:', err);
+                statusDiv.textContent = 'Error capturing image. Please try again.';
+            }
+        }
+        
+        function removeImage() {
+            // Revoke object URLs to prevent memory leaks
+            if (previewImage.src && previewImage.src.startsWith('blob:')) {
+                URL.revokeObjectURL(previewImage.src);
+            }
+            if (capturedImage.src && capturedImage.src.startsWith('blob:')) {
+                URL.revokeObjectURL(capturedImage.src);
+            }
+            
+            fileInput.value = '';
+            previewImage.src = '';
+            previewImage.style.display = 'none';
+            capturedImage.src = '';
+            capturedImage.style.display = 'none';
+            removeImageBtn.style.display = 'none';
+            currentImage = null;
+            
+            // If camera was active, show the feed again
+            if (stream) {
+                cameraFeed.style.display = 'block';
+                captureBtn.style.display = 'inline-block';
+                statusDiv.textContent = 'Camera ready. Click capture to take a photo.';
+            } else {
+                statusDiv.textContent = 'Ready';
+            }
+        }
+        
+        async function sendMessage(message) {
+            if (!message && !currentImage) {
+                statusDiv.textContent = 'Please enter a message, upload an image, or take a photo';
+                return;
+            }
+            
+            try {
+                // Stop recording if active
+                if (isRecording) {
+                    recognition.stop();
+                    isRecording = false;
+                }
+                
+                statusDiv.textContent = 'Processing...';
+                
+                // Show user message
+                const displayMessage = message || (currentImage ? "Analyzing uploaded image..." : "");
+                if (displayMessage) {
+                    responseDiv.innerHTML += `<p><strong>You:</strong> ${displayMessage}</p>`;
+                }
+                if (currentImage) {
+                    responseDiv.innerHTML += `<p><em>Image uploaded: ${currentImage.name}</em></p>`;
+                }
+                responseDiv.innerHTML += '<hr>';
+                
+                // Scroll to bottom of response
+                responseDiv.scrollTop = responseDiv.scrollHeight;
+                
+                let response;
+                
+                if (currentImage) {
+                    // Handle image upload
+                    const formData = new FormData();
+                    formData.append('image', currentImage);
+                    if (message) {
+                        formData.append('message', message);
+                    }
+                    
+                    response = await fetch('http://localhost:3000/upload', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    // Reset the image after sending
+                    removeImage();
+                } else {
+                    // Handle text message
+                    response = await fetch('http://localhost:3000/generate-response', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ message })
+                    });
+                }
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Display AI response
+                    responseDiv.innerHTML += `<p><strong>HealthBuddy:</strong> ${data.response}</p>`;
+                    
+                    // Generate speech for the response
+                    await generateSpeech(data.response);
+                    
+                    statusDiv.textContent = 'Ready';
+                } else {
+                    throw new Error(data.error || 'Failed to get response');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                statusDiv.textContent = `Error: ${error.message}`;
+                responseDiv.innerHTML += `<p style="color: red;">Error: ${error.message}</p>`;
+            } finally {
+                // Clear input field after sending
+                userInput.value = '';
+                // Scroll to bottom of response
+                responseDiv.scrollTop = responseDiv.scrollHeight;
+            }
+        }
+        
+        async function generateSpeech(text) {
+            try {
+                statusDiv.textContent = 'Generating speech...';
+                
+                const response = await fetch('http://localhost:3000/process', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ text })
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to generate speech');
+                }
+                
+                const data = await response.json();
+                
+                if (data.audio) {
+                    audioPlayer.src = `data:audio/mp3;base64,${data.audio}`;
+                    audioPlayer.classList.remove('hidden');
+                    audioPlayer.play().catch(e => console.error('Playback failed:', e));
+                }
+                
+                statusDiv.textContent = 'Ready';
+            } catch (error) {
+                console.error('Speech generation error:', error);
+                statusDiv.textContent = 'Error generating speech';
+            }
+        }
+    </script>
+</body>
+</html>
